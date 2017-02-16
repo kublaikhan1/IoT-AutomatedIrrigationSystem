@@ -20,3 +20,6 @@ One additional sensor will be placed in the water reservoir where the pump is lo
 6. 1x 5VDC 4-channel relay
 7. 1x Water level sensor
 
+#Contributors
+@khawajahamad
+@ElliotGiese
