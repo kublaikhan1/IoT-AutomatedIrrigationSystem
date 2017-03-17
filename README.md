@@ -21,5 +21,5 @@ One additional sensor will be placed in the water reservoir where the pump is lo
 7. 1x Water level sensor
 
 # Contributors
-@khawajahamad
-@ElliotGiese
+@hamadkh
+@giese
