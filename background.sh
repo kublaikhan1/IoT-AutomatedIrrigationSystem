@@ -1,15 +1,18 @@
 #! /bin/bash
 
+# chmod +x background.sh
+# ./background.sh
+# GUI button should run this script to execute common.c
+# when common.c retuns 0 the script restarts common.c
+
 function updg(){
 
 gcc -o a.out common.c
-./a.out
 
-while ! ~/a.out
+while ~/a.out
 
 do
-	echo "Restarting"
-	./a.out
+	echo "Restarting System"
 	sleep 1
 done
 } 
