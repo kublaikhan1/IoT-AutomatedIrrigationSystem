@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-// A normal C function that is executed as a thread when its name
-// is specified in pthread_create()
 void funct();
 
 void *soilMoisture(void *vargp)
