@@ -2,12 +2,16 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+// A normal C function that is executed as a thread when its name
+// is specified in pthread_create()
 void funct();
 
 void *soilMoisture(void *vargp)
 {
-     sleep(10);
-     funct();
+     int f=0;
+     while(f==0){
+     sleep(10);   
+     funct();}
      return NULL;
 }
 
@@ -27,6 +31,4 @@ int main()
 void funct()
 {
   printf("******(Measuring soil moisture after sleeping for 10SEC)***********\n");
-  pthread_t ptk;
-  pthread_create(&ptk, NULL, soilMoisture, NULL);
 }
