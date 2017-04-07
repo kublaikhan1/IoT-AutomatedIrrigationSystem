@@ -1,7 +1,7 @@
-#include <lcd.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <mcp3004.h>
 #include <wiringPi.h>
 
@@ -19,20 +19,19 @@
 #define FL_SWI 4
 
 /* Define number of plants */
-#define NUM_PLANTS 8
+#define NUM_PLANTS 2
 
-/* Define LCD pins */
-#define RS 25
-#define EN 29
-#define D4 28
-#define D5 27
-#define D6 26
-#define D7 6
+/* Definitions for DHT22 temp/hum sensor */
+#define MAX_TIMINGS 85
+#define DHT_PIN 5
 
 void start();
 int getWaterLevel();
-void getSoilMoisture(int[]);
+void getSoilMoisture(int[],float[]);
 double getWaterUsage(double);
+void read_dht_data(float[]);
+
+int data[5] = { 0, 0, 0, 0, 0 };
 
 int main(void)
 {
@@ -41,7 +40,9 @@ int main(void)
 	double timeWatered, amtWatered;
 	time_t waterTimeStart, waterTimeEnd;
 	const unsigned char buf[] = "Soil Moisture:";
+	float humtemp[3] = {0.0};
 	int soilVals[NUM_PLANTS] = {0};
+	float soilPercent[NUM_PLANTS] = {0.0};
 	int relays[] = {RELAY1,RELAY2,RELAY3,RELAY4};
 	
 	/* Initialize wiringPi */
@@ -51,40 +52,47 @@ int main(void)
 		return 1;
 	}	
 	
-	/* Initialize LCD screen */
-	if( (fd=lcdInit(2,16,4,RS,EN,D4,D5,D6,D7,0,0,0,0)) == -1)
-	{
-		printf("LCD setup failed");
-		return 1;
-	}
-	
-	/*
-	lcdClear(fd);
-	lcdPosition(fd,0,0);
-	lcdPuts(fd,buf);
-	lcdPosition(fd,0,1);
-	lcdClear(fd);
-	*/
-	
 	start();
 	
 	waterLvl = getWaterLevel();
 	printf("Water Level = %d\n\n", waterLvl);
 
-	getSoilMoisture(soilVals);
+	getSoilMoisture(soilVals,soilPercent);
 	printf("\n");
-
-	for(i = 0; i < numRelays; i++)
+	
+	int count = 0;
+	while(1)
 	{
-		if(soilVals[i] < 150 && waterLvl)
+		count++;
+		read_dht_data(humtemp);
+		if( ( humtemp[0] > 0.0 && humtemp[1] > 0.0 && humtemp[2] > 0.0 ) || count > 249)
+		{
+			humtemp[0] = 0.0;
+			humtemp[1] = 0.0;
+			humtemp[2] = 0.0;
+			break;
+		}
+	}
+		
+		
+	
+	for(i = 0; i < NUM_PLANTS; i++)
+	{
+		if(soilPercent[i] < 50.0 && waterLvl)
 		{
 			time(&waterTimeStart);
 			digitalWrite(relays[i], LOW);
+			digitalWrite(relays[2], LOW);
 			printf("RELAY %d open\n", (i+1) );
-			delay(3000);
+			printf("PUMP ON \n" );
+			
+			delay(5000);
 			
 			digitalWrite(relays[i], HIGH);
+			digitalWrite(relays[2], HIGH);
 			printf("RELAY %d closed\n\n", (i+1) );
+			printf("PUMP OFF \n");
+			
 			time(&waterTimeEnd);
 			timeWatered = difftime(waterTimeEnd, waterTimeStart);
 			amtWatered += getWaterUsage(timeWatered);
@@ -106,7 +114,7 @@ int main(void)
 }
 
 
-/* -------------------------------------------------
+/* ------------------------------------------------
  * Initialize Analog-to-Digital Converter
  * Initialize GPIO pin modes for each relay
  * Initialize GPIO pin for float switch
@@ -124,7 +132,7 @@ void start()
 }
 
 
-/* -------------------------------------------------
+/* ------------------------------------------------
  * Returns 0 if water level is low, 1 otherwise
  * -----------------------------------------------*/
  
@@ -134,26 +142,39 @@ int getWaterLevel()
 }
 
 
-/* --------------------------------------------------
+/* ---------------------------------------------------------------
  * Reads channels 0-7 on MCP3008 chip over Serial 
  * Peripheral Interface (SPI).
  * Each analogue sensor returns a value from 0 ~ 600
  * Value of    0 is dry (i.e. air)
  * Value of ~600 is wet (i.e. pure water)
- * ------------------------------------------------*/
-void getSoilMoisture(int soilVals[])
+ * --------------------------------------------------------------*/
+ 
+void getSoilMoisture(int soilVals[], float soilPercent[])
 {
-	int chan;
+	int chan, i;
+	int sum = 0;
 	
 	for(chan = 0; chan < NUM_PLANTS; ++chan)
 	{
-		soilVals[chan] = 1023 - analogRead(BASE + chan);
-		printf("Sensor %d:  %d\n", chan+1, soilVals[chan]);
+		for(i = 0; i < 1000; i++)
+			sum += (1023 - analogRead(BASE + chan));
+			
+		soilVals[chan] = sum / 1000;
+		soilPercent[chan] = (float) ((soilVals[chan] / 600.0) * 100.0);
+
+		if(soilVals[chan] < 600)
+		{
+			printf("Sensor %d:  %d\n", chan+1, soilVals[chan]);
+			printf("Percent %d: %3.2lf%\n\n", chan+1, soilPercent[chan]);
+		}
+		
+		sum = 0;	
 	}
 }
 
 
-/* -------------------------------------------------
+/* ------------------------------------------------
  * Returns the amount of water  
  * used by the pump in Liters
  * Pump waters at a rate of 300L/H
@@ -163,4 +184,97 @@ void getSoilMoisture(int soilVals[])
 double getWaterUsage(double timeWatered)
 {
 	return 300 * timeWatered / 3600;
+}
+
+
+/*--------------------------------------------------------------------------------------
+ *			:::IMPORTANT NOTE:::
+ * 
+ * This code was taken from the following source in order to avoid
+ * re-inventing the wheel. The sensor used is DIGITAL, which is why
+ * the code to extract meaningful data is so long. Using an ANALOG
+ * sensor would have avoided the need to borrow this source code
+ *
+ * www.uugear.com/portfolio/read-dht1122-temperature-humidity-sensor-from-raspberry-pi/
+ *
+ *-------------------------------------------------------------------------------------*/
+ 
+void read_dht_data(float arr[])
+{
+	uint8_t laststate	= HIGH;
+	uint8_t counter		= 0;
+	uint8_t j		= 0, i;
+
+	data[0] = data[1] = data[2] = data[3] = data[4] = 0;
+
+	/* pull pin down for 18 milliseconds */
+	pinMode( DHT_PIN, OUTPUT );
+	digitalWrite( DHT_PIN, LOW );
+	delay( 18 );
+
+	/* prepare to read the pin */
+	pinMode( DHT_PIN, INPUT );
+
+	/* detect change and read data */
+	for ( i = 0; i < MAX_TIMINGS; i++ )
+	{
+		counter = 0;
+		while ( digitalRead( DHT_PIN ) == laststate )
+		{
+			counter++;
+			delayMicroseconds( 1 );
+			if ( counter == 255 )
+			{
+				break;
+			}
+		}
+		laststate = digitalRead( DHT_PIN );
+
+		if ( counter == 255 )
+			break;
+
+		/* ignore first 3 transitions */
+		if ( (i >= 4) && (i % 2 == 0) )
+		{
+			/* shove each bit into the storage bytes */
+			data[j / 8] <<= 1;
+			if ( counter > 16 )
+				data[j / 8] |= 1;
+			j++;
+		}
+	}
+
+	/*
+	 * check we read 40 bits (8bit x 5 ) + verify checksum in the last byte
+	 * print it out if data is good
+	 */
+	if ( (j >= 40) &&
+	     (data[4] == ( (data[0] + data[1] + data[2] + data[3]) & 0xFF) ) )
+	{
+		float h = (float)((data[0] << 8) + data[1]) / 10;
+		if ( h > 100 )
+		{
+			h = data[0];	// for DHT11
+		}
+		float c = (float)(((data[2] & 0x7F) << 8) + data[3]) / 10;
+		if ( c > 125 )
+		{
+			c = data[2];	// for DHT11
+		}
+		if ( data[2] & 0x80 )
+		{
+			c = -c;
+		}
+		float f = c * 1.8f + 32;
+		printf( "Humidity = %.1f %% Temperature = %.1f *C (%.1f *F)\n", h, c, f );
+		
+		arr[0] = h;
+		arr[1] = c;
+		arr[2] = f;
+	}
+	
+	else  
+	{
+		//printf( "DHT data not good :: skipping\n" );
+	}	
 }
