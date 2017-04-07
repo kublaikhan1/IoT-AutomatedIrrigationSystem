@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <mcp3004.h>
+#include <pthread.h>
 #include <wiringPi.h>
 
 /* Definitions for MCP3004/8 chipset */
@@ -27,24 +28,27 @@
 
 void start();
 int getWaterLevel();
+void *soilThread();
 void getSoilMoisture(int[],float[]);
 double getWaterUsage(double);
 void read_dht_data(float[]);
+void temperatureReadings();
+void activateRelays();
 
 int data[5] = { 0, 0, 0, 0, 0 };
+int soilVals[NUM_PLANTS] = {0};
+float soilPercent[NUM_PLANTS] = {0.0};
+float humtemp[3] = {0.0};
+int waterLvl;
+
+
 
 int main(void)
 {
-	int waterLvl, fd, i;
-	int numPlantsWatered=0; int numRelays=4;
-	double timeWatered, amtWatered;
-	time_t waterTimeStart, waterTimeEnd;
-	const unsigned char buf[] = "Soil Moisture:";
-	float humtemp[3] = {0.0};
-	int soilVals[NUM_PLANTS] = {0};
-	float soilPercent[NUM_PLANTS] = {0.0};
-	int relays[] = {RELAY1,RELAY2,RELAY3,RELAY4};
+	pthread_t pt;
+	pthread_create(&pt, NULL, soilThread, NULL);
 	
+
 	/* Initialize wiringPi */
 	if(wiringPiSetup() == -1)
 	{
@@ -53,61 +57,22 @@ int main(void)
 	}	
 	
 	start();
+	int count = 1;
 	
-	waterLvl = getWaterLevel();
-	printf("Water Level = %d\n\n", waterLvl);
-
-	getSoilMoisture(soilVals,soilPercent);
-	printf("\n");
-	
-	int count = 0;
-	while(1)
+	while(count == 1)
 	{
-		count++;
-		read_dht_data(humtemp);
-		if( ( humtemp[0] > 0.0 && humtemp[1] > 0.0 && humtemp[2] > 0.0 ) || count > 249)
-		{
-			humtemp[0] = 0.0;
-			humtemp[1] = 0.0;
-			humtemp[2] = 0.0;
-			break;
-		}
-	}
+		printf("Water Level = %d\n\n", waterLvl = getWaterLevel());
 		
-		
-	
-	for(i = 0; i < NUM_PLANTS; i++)
-	{
-		if(soilPercent[i] < 50.0 && waterLvl)
+		if(!waterLvl)
 		{
-			time(&waterTimeStart);
-			digitalWrite(relays[i], LOW);
-			digitalWrite(relays[2], LOW);
-			printf("RELAY %d open\n", (i+1) );
-			printf("PUMP ON \n" );
-			
-			delay(5000);
-			
-			digitalWrite(relays[i], HIGH);
-			digitalWrite(relays[2], HIGH);
-			printf("RELAY %d closed\n\n", (i+1) );
-			printf("PUMP OFF \n");
-			
-			time(&waterTimeEnd);
-			timeWatered = difftime(waterTimeEnd, waterTimeStart);
-			amtWatered += getWaterUsage(timeWatered);
-			numPlantsWatered++;
+			printf("Water level is low!\n"); // send Tweet
+			printf("Exiting program!\n");
+			count++;
+			exit(1);
 		}
-	}
-	
-	
-	printf("Time watered: %.2lf seconds\n", timeWatered*numPlantsWatered);
-	printf("Amount of water used: %.2lf Liters\n", amtWatered);
-	
-	
-	if(!waterLvl)
-	{
-		printf("Water level is low!\n"); // send Tweet	
+		
+		activateRelays();
+		sleep(2);
 	}
 
 	return 0;
@@ -157,13 +122,14 @@ void getSoilMoisture(int soilVals[], float soilPercent[])
 	
 	for(chan = 0; chan < NUM_PLANTS; ++chan)
 	{
-		for(i = 0; i < 1000; i++)
+		
+		for(i = 0; i < 2000; i++)
 			sum += (1023 - analogRead(BASE + chan));
 			
-		soilVals[chan] = sum / 1000;
-		soilPercent[chan] = (float) ((soilVals[chan] / 600.0) * 100.0);
+		soilVals[chan] = sum / 2000;
+		soilPercent[chan] = (float) ((soilVals[chan] / 800.0) * 100.0);
 
-		if(soilVals[chan] < 600)
+		if(soilVals[chan] < 800)
 		{
 			printf("Sensor %d:  %d\n", chan+1, soilVals[chan]);
 			printf("Percent %d: %3.2lf%\n\n", chan+1, soilPercent[chan]);
@@ -272,9 +238,106 @@ void read_dht_data(float arr[])
 		arr[1] = c;
 		arr[2] = f;
 	}
-	
-	else  
+}
+
+
+/* ------------------------------------------------
+ * Thread function which will collect the soil data  
+ * and temperature data
+ * If the water level is LOW, then the thread will
+ * die
+ * -----------------------------------------------*/
+ 
+void *soilThread()
+{
+	printf("\t\t---- soil thread ----\n");
+	printf("\t\treading moisture ...\n");
+	while(1)
 	{
-		//printf( "DHT data not good :: skipping\n" );
-	}	
+		sleep(5);
+		getSoilMoisture(soilVals, soilPercent);
+		temperatureReadings();
+		if(!waterLvl)
+		{
+			pthread_exit(NULL);
+			exit(1);
+		}
+	}
+
+	return NULL;
+}
+
+
+/* -----------------------------------------------------
+ * Function to take 250 temperature / humidity  
+ * readings based on the read_dht_data() function
+ * The sensor's data is sometimes corrupt, which is the
+ * result of a faulty sensor - even the read_dht_data()
+ * function accounts for this... So 250 measurements
+ * will ensure that at least one value is recorded
+ * ----------------------------------------------------*/
+ 
+void temperatureReadings()
+{
+	int count = 0;
+	while(1)
+	{
+		count++;
+		read_dht_data(humtemp);
+		if( ( humtemp[0] > 0.0 && humtemp[1] > 0.0 && humtemp[2] > 0.0 ) || count > 249)
+		{
+			humtemp[0] = 0.0;
+			humtemp[1] = 0.0;
+			humtemp[2] = 0.0;
+			break;
+		}
+	}
+}
+
+
+/* ----------------------------------------------------
+ * Function to turn on the relays, which are connected
+ * to the solenoid vales and the water pump.
+ * If the soil moisture percentage is lower than 50%
+ * for a given plant, the relay/valve associated with
+ * that plant will open, and the pump will turn on.
+ *
+ * Function also records amount of water used, and
+ * length of time that plants were watered.
+ * ---------------------------------------------------*/
+ 
+void activateRelays()
+{
+	double timeWatered, amtWatered;
+	int relays[] = {RELAY1,RELAY2,RELAY3,RELAY4};
+	int numPlantsWatered=0; int numRelays=4;
+	time_t waterTimeStart, waterTimeEnd;
+	int i;
+	
+	for(i = 0; i < NUM_PLANTS; i++)
+	{
+		if(soilPercent[i] < 50.0 && waterLvl)
+		{
+			time(&waterTimeStart);
+			digitalWrite(relays[i], LOW);
+			digitalWrite(relays[2], LOW);
+			printf("RELAY %d open\n", (i+1) );
+			printf("PUMP ON \n" );
+			
+			delay(3000);
+			
+			digitalWrite(relays[i], HIGH);
+			digitalWrite(relays[2], HIGH);
+			printf("RELAY %d closed\n\n", (i+1) );
+			printf("PUMP OFF \n");
+			
+			time(&waterTimeEnd);
+			timeWatered = difftime(waterTimeEnd, waterTimeStart);
+			amtWatered += getWaterUsage(timeWatered);
+			numPlantsWatered++;
+		}
+	}
+	
+	printf("Time watered: %.2lf seconds\n", timeWatered*numPlantsWatered);
+	printf("Amount of water used: %.2lf Liters\n", amtWatered);
 }
