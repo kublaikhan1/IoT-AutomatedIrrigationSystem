@@ -1,0 +1,28 @@
+LCD Display
+1  VSS  - Ground
+2  VDD  - 5VDC
+3  V0   - Ground
+4  RS   - GPIO26, or PIN 24 on wiringPi, PIN 37 header
+5  RW   - Ground
+6  E    - GPIO21, or PIN XX on wiringPi, PIN 40 header
+7  D0   - SKIP
+8  D1   - SKIP
+9  D2   - SKIP
+10 D3   - SKIP
+11 D4   - GPIO20, or PIN XX on wiringPi, PIN 38 header
+12 D5   - GPIO16, or PIN XX on wiringPi, PIN 36 header
+13 D6   - GPIO12, or PIN XX on wiringPi, PIN 32 header
+14 D7   - GPIO25, or PIN XX on wiringPi, PIN 22 header
+15 A    - 5VDC
+16 K    - Ground
+
+
+
+
+Float switch
+When magnet is at bottom (low on water), circuit closes - i.e.
+HIGH VOLTAGE
+When magnet is floating at top (water level is good), circuit open - i.e.
+LOW VOLTAGE
+Pin 8 (4 on wiring)
+Ground
