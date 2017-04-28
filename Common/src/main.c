@@ -40,10 +40,8 @@ void on_btn_START_clicked()
 	gtk_label_set_text(GTK_LABEL(g_lbl_hello), "ON");
 	if(ran == 0)
 	{
-		//ran = system("./myprog");
-		//printf("%d\n", ran);
-		//ran = 1;
-		//printf("%d\n", ran);
+		ran = system("main/start");
+		ran = 1;
 	}
 	
 }

@@ -7,20 +7,18 @@
 
 function updg(){
 
-gcc -o a.out common.c
+make
+cd main
+make
+cd ..
+./smart_plants
 
-while ~/a.out
-
-do
-	echo "Restarting System"
-	sleep 1
-done
 } 
 
 #MAIN PROGRAM
 
 
-echo -e "----------------------- RESTART SCRIPT -----------------------" 
+echo -e "----------------------- START SCRIPT -----------------------" 
 sleep 1
 updg			#updg() FUNCTION CALL
 
