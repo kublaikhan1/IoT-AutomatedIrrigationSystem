@@ -5,7 +5,7 @@ GtkWidget *g_lbl_hello;
 GtkWidget *btn_START;
 GtkWidget *btn_STOP;
 
-int ran = 0;
+int running = 0;
 
 int main(int argc, char *argv[])
 {
@@ -36,24 +36,27 @@ int main(int argc, char *argv[])
 
 void on_btn_START_clicked()
 {	
-	
-	gtk_label_set_text(GTK_LABEL(g_lbl_hello), "ON");
-	if(ran == 0)
+	if(running == 0)
 	{
-		ran = system("main/start");
-		ran = 1;
+		gtk_label_set_text(GTK_LABEL(g_lbl_hello), "ON");
+		system("lxterminal -e main/watering");
+		running = 1;
 	}
-	
 }
 
 void on_btn_STOP_clicked()
 {
-    gtk_label_set_text(GTK_LABEL(g_lbl_hello), "OFF");
-    //ran = 0;
+	if(running == 1)
+	{
+    		gtk_label_set_text(GTK_LABEL(g_lbl_hello), "OFF");
+    		system("./stop.sh");
+    		running = 0;
+	}
 }
 
 // called when window is closed
 void on_window_main_destroy()
 {
+    system("./stop.sh");
     gtk_main_quit();
 }
