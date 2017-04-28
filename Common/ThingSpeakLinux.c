@@ -49,7 +49,7 @@ char SendDataToThingSpeak(int FieldNo, float * FieldArray, char * Key, int SizeO
 	}
 	
 	sprintf(ptReqString,"%s",EndOfHTTPReq);
-	printf("%s",EndOfHTTPReq);
+	//printf("%s",EndOfHTTPReq);
 	//Connecting to ThingSpeak and sending data:
 	portno = PORT_THINGSPEAK;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
