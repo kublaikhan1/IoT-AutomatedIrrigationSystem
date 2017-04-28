@@ -65,7 +65,7 @@
         <child>
           <object class="GtkLinkButton" id="linkbutton1">
             <property name="label" translatable="yes">Data Visualization</property>
-            <property name="width_request">164</property>
+            <property name="width_request">100</property>
             <property name="height_request">80</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -74,7 +74,7 @@
             <property name="uri">http://snapcipher.com</property>
           </object>
           <packing>
-            <property name="x">101</property>
+            <property name="x">109</property>
             <property name="y">168</property>
           </packing>
         </child>
