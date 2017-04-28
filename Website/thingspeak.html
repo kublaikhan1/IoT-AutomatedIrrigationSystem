@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ThingSpeak Live Colours</title>
+        <style type="text/css">
+        body{
+          background-color: #333333;
+        }
+        </style>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript">
+
+		$(document).ready(function() {
+
+		    getUpdates();
+
+		    // check for new updates
+		    setInterval('getUpdates()',120000);
+
+		});
+
+		function getUpdates() {
+
+			// get the data with a webservice call
+			$.getJSON('http://api.thingspeak.com/channels/243137/feed/last.json?callback=?', function(data) {
+
+					// if the field1 has data update the page
+					if (data.field1) {
+
+					   document.getElementById("moisture").innerHTML = data.field1;
+             document.getElementById("water").innerHTML = data.field1;
+					}
+
+			});
+
+		}
+
+	</script>
+    </head>
+    <body>
+            <div id="moisture" class="color">&nbsp;</div>
+            <div id="water" class="color">&nbsp;</div>
+        </div>
+    </body>
+</html>
