@@ -1,0 +1,92 @@
+<<<<<<< HEAD
+<html>
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="http://code.highcharts.com/stock/highstock.js"></script>
+    <script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="plant1.js"></script>     <!-- MAIN JS File-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css">
+    <link rel="stylesheet" href="rasp.css"> <!-- MAIN CSS File-->
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js"></script>
+    <title>Smart Garden Sensor Chart</title>
+</head>
+<body>
+  <center> <a href="home.html"><img src="raspberry-pi.svg" width="50px" height="50px"></a>
+    <a href="https://github.com/hamadkh/IoT-AutomatedIrrigationSystem"><img src="GitHub-dark.png" width="50px" height="50px"></img></a>
+  </center>
+    <div id="chart-container" style="height: 400;">
+        <div class="progress" style="margin:5% 5%">
+            <div class="indeterminate"></div>
+        </div>
+    </div>
+        <div class="row" style="margin-left:40%" >
+           <div class="input-field col s4" >
+            <select id="Channel Select" onchange="location = this.options[this.selectedIndex+1].value;">
+                <option value="home.html">Plant1</option>
+              <option value="plant2.html">Plant2</option>
+            </select>
+        </div>
+        <div>
+      <input id="Update" name="Update" type="checkbox" checked="true" />
+      <label for="Update" style="margin:40 8px;">Update Charts (Latency)</label>
+    </div>
+      </div>
+        <div id="pipeWithPlant">
+	         <div class="pixel-size carnivorousPlant"></div>
+           <div class="pixel-size pipe"></div>
+  </div>
+</body>
+<footer>
+<p>  © KhawajaHamad 2017 </p>
+</footer>
+</html>
+=======
+<html>
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="http://code.highcharts.com/stock/highstock.js"></script>
+    <script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://rawgithub.com/highslide-software/export-csv/master/export-csv.js"></script>
+    <script src="./highchartsSG.js"></script>
+    <script src="smart.js"></script>     <!-- MAIN JS File-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css">
+    <link rel="stylesheet" href="rasp.css"> <!-- MAIN CSS File-->
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js"></script>
+    <title>Smart Garden Sensor Chart</title>
+</head>
+<body>
+  <center> <img src="raspberry-pi.svg" width="50px" height="50px">
+    <a href="https://github.com/hamadkh/IoT-AutomatedIrrigationSystem"><img src="GitHub-dark.png" width="50px" height="50px"></img></a>
+  </center>
+    <div id="chart-container" style="height: 400;">
+        <div class="progress" style="margin:5% 5%">
+            <div class="indeterminate"></div>
+        </div>
+    </div>
+        <div class="row" style="margin-left:40%" >
+           <div class="input-field col s4" >
+            <select id="Channel Select">
+              <option value="" disabled selected>PLANTS</option>
+            </select>
+        </div>
+        <div>
+      <input id="Update" name="Update" type="checkbox" checked="true" />
+      <label for="Update" style="margin:40 8px;">Update Charts (Latency)</label>
+    </div>
+      </div>
+        <div id="pipeWithPlant">
+	         <div class="pixel-size carnivorousPlant"></div>
+           <div class="pixel-size pipe"></div>
+  </div>
+</body>
+<footer>
+<p>  © KhawajaHamad 2017 </p>
+</footer>
+</html>
+>>>>>>> f5c89d3557e740e49296c458da4d6f607a4dec89
