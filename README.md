@@ -20,6 +20,12 @@ One additional sensor will be placed in the water reservoir where the pump is lo
 6. 1x 5VDC 4-channel relay
 7. 1x Water level sensor
 
+
+
+![Alt text](https://github.com/hamadkh/IoT-AutomatedIrrigationSystem/blob/master/Documentation/CS355_png.png?raw=true "Optional Title")
+
+
+
 # Contributors
 @hamadkh
 @giese
