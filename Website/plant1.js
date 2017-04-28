@@ -17,6 +17,9 @@ channelKeys.push({
     },{
         field: 4,
         axis: 'W'
+    },{
+        field: 5,
+        axis: 'X'
     }]
 });
 // user's timezone offset
@@ -172,7 +175,7 @@ $(document).ready(function() {
                 valueDecimals: 1
             },
             title: {
-                text: 'RASPBERRYPI SMART GARDEN SENSOR DATA ',
+                text: 'RASPBERRYPI SMART GARDEN SENSOR DATA [PLANT 1]',
                 style: {
                   "fontSize":"24px",
                   "fontFamily":"Roboto"
@@ -199,7 +202,7 @@ $(document).ready(function() {
             },
             yAxis: [{
                 title: {
-                    text: 'Water Level [0-1]'
+                    text: 'Time Watered'
                 },
                 opposite: false,
                 id: 'W'
@@ -224,6 +227,15 @@ $(document).ready(function() {
                 },
                 opposite: true,
                 id: 'C'
+            },{
+                labels: {
+                    format: '{value}T'
+                },
+                title: {
+                    text: 'Water Amount (L)'
+                },
+                opposite: true,
+                id: 'X'
             }],
             exporting: {
                 enabled: true,
