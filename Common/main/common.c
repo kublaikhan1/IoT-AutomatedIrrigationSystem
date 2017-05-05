@@ -34,7 +34,7 @@ int getWaterLevel();
 void *soilThread();
 void getSoilMoisture(int[],float[]);
 double getWaterUsage(double);
-void read_dht_data(float[]);
+void read_dht_data();
 void temperatureReadings();
 void activateRelays();
 
@@ -42,8 +42,8 @@ int data[5] = { 0, 0, 0, 0, 0 };
 int soilVals[NUM_PLANTS] = {1000};
 float soilPercent[NUM_PLANTS] = {100.0};
 float humtemp[3] = {0.0};
-float FieldsArrayPlant1[6]={0};
-float FieldsArrayPlant2[6]={0};
+float FieldsArrayPlant1[6]={0.0};
+float FieldsArrayPlant2[6]={0.0};
 int waterLvl;
 
 
@@ -74,7 +74,7 @@ int main(void)
 		}
 		
 		//activateRelays();
-		sleep(3);
+		sleep(5);
 	}
 
 	return 0;
@@ -207,15 +207,12 @@ void temperatureReadings()
 	int count = 0;
 	while(1)
 	{
-		count++;
-		read_dht_data(humtemp);
-		if( ( humtemp[0] > 0.0 && humtemp[1] > 0.0 && humtemp[2] > 0.0 ) || count > 249)
+		read_dht_data();
+		if( !( humtemp[0] == 0.0 || humtemp[1] == 0.0 || humtemp[2] == 0.0 ) || (humtemp[0] >= 100.0 || humtemp[1] >= 100.0) || count > 249)
 		{
-			humtemp[0] = 0.0;
-			humtemp[1] = 0.0;
-			humtemp[2] = 0.0;
 			break;
 		}
+		count++;
 	}
 }
 
@@ -233,7 +230,7 @@ void temperatureReadings()
  
 void activateRelays()
 {
-	double timeWatered, amtWatered;
+	double timeWatered = 0.0; double amtWatered = 0.0;
 	int relays[] = {RELAY1,RELAY2,RELAY3,RELAY4};
 	int numPlantsWatered=0; int numRelays=4;
 	time_t waterTimeStart, waterTimeEnd;
@@ -249,7 +246,7 @@ void activateRelays()
 			printf("PLANT valve #%d open\n", (i+1) );
 			//printf("PUMP ON \n" );
 			
-			delay(3000);
+			delay(5000);
 			
 			digitalWrite(relays[i], HIGH);
 			digitalWrite(relays[2], HIGH);
@@ -283,6 +280,11 @@ void activateRelays()
 		printf("Time watered: %.2lf seconds\n", timeWatered*numPlantsWatered);
 		printf("Amount of water used: %.2lf Liters\n\n\n", amtWatered);
 	}
+	else
+	{
+		printf("Time watered: %.2lf seconds\n", timeWatered*numPlantsWatered);
+		printf("Amount of water used: %.2lf Liters\n\n\n", amtWatered);
+	}
 }
 
 
@@ -298,11 +300,12 @@ void activateRelays()
  *
  *-------------------------------------------------------------------------------------*/
  
-void read_dht_data(float arr[])
+void read_dht_data()
 {
 	uint8_t laststate	= HIGH;
 	uint8_t counter		= 0;
 	uint8_t j		= 0, i;
+	float hum, cel, far;
 
 	data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
@@ -367,8 +370,11 @@ void read_dht_data(float arr[])
 		float f = c * 1.8f + 32;
 		printf( "\n\nHumidity = %.1f %% Temperature = %.1f *C (%.1f *F)\n\n", h, c, f );
 		
-		arr[0] = h;
-		arr[1] = c;
-		arr[2] = f;
+		hum = h;
+		cel = c;
+		far = f;
 	}
+	humtemp[0] = hum;
+	humtemp[1] = cel;
+	humtemp[2] = far;
 }
